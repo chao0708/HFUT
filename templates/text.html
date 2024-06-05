@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>text</title>
+    <link rel="stylesheet" href="/static/css/text.css">
+    <link rel="shortcut icon" href="/static/favicon.ico">
+    <style>
+        input[type="file"]::file-selector-button {
+            font-size: 20px;
+            font-family: 楷体_GB2312;
+            font-weight: bolder;
+            border-radius:10px;
+            width: 100px;
+            height: 40px;
+            margin-top: 16px;
+        }
+    </style>
+</head>
+<body>
+<div class="box">
+    <div class="box1">
+    <div class="input">
+        <textarea class="in" id="input" placeholder="请输入文本"></textarea>
+    </div>
+    <div class="output">
+        <textarea class="out" id="output"  disabled placeholder="结果"></textarea>
+    </div>
+    </div>
+    <div class="box2">
+        <div class="position">
+            <button class="embed" id="embed">嵌入</button>
+        </div>
+        <div class="position">
+            <button class="extract" id="extract">提取</button>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/axios/dist/axios.min.js"></script>
+<script>
+    {
+        function embed(){
+            let text = document.getElementById("input").value;
+            if(text == ""){
+                alert("input text is null");
+                return false;
+            }
+            const  form = new FormData();
+            form.append("msg", text);
+                axios({
+                    url: 'http://localhost:12345/embed-text',
+                    method: 'POST',
+                    data:form
+                }).then(result => {
+                    const data = result.data;
+                    document.getElementById("output").innerHTML = data.new_msg;
+                    console.log(data);
+                }).catch((error) => {
+                    console.log(error);
+                    alert("check")
+                })
+            }
+        const element1 = document.getElementById("embed");
+        element1.addEventListener("click", embed);
+    }
+    
+    {
+        function extract(){
+            let text = document.getElementById("input").value;
+            if(text == ""){
+                alert("input text is null");
+                return false;
+            }
+            const  form = new FormData();
+            form.append("msg", text);
+            axios({
+                url: "http://localhost:12345/extract-text",
+                method: "POST",
+                data:form
+            }).then(result => {
+                console.log(result.data);
+                const judge = result.data.result;
+                document.getElementById("output").innerHTML = judge;
+            }).catch(error => {
+            alert("check")
+        })
+        }
+        const element3 = document.getElementById("extract");
+        element3.addEventListener("click", extract);
+    }
+
+
+</script>
+</body>
+</html>

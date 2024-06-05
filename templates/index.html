@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>code</title>
+    <link rel="stylesheet" href="/static/css/index.css">
+    <link rel="shortcut icon" href="/static/favicon.ico">
+    <style>
+        input[type="file"]::file-selector-button {
+            font-size: 20px;
+            font-family: 楷体_GB2312;
+            font-weight: bolder;
+            border-radius:10px;
+            width: 100px;
+            height: 40px;
+            margin-top: 16px;
+        }
+    </style>
+</head>
+<body>
+<div class="entire">
+    <div class="box-left">
+    <div class="return">
+        <a href="hello.html" style="text-decoration: none;">
+            <div class="button">返回</div>
+        </a>
+    </div>
+<div class="bottom">
+    <div id="left-area">
+        <textarea placeholder="请输入代码" class="input" id="input"></textarea>
+    </div>
+    <div class="upload">
+        <input type="file" class="file" name="file" accept="" id="file" title="支持的文件格式有：...">
+        <button class="postFile" id="postFile" type="submit">上传文件</button>
+    </div>
+
+</div>
+</div>
+<div class="box-middle">
+<div class="box">
+    <div>
+        <label class="hash">哈希算法:</label>
+        <select class="algorithm" id="algorithm">
+        <option value="SM3" class="option">SM3</option>
+        <option value="MD5" class="option">MD5</option>
+        <option value="SHA1" class="option">SHA1</option>
+        <option value="SHA256" class="option">SHA256</option>
+        <option value="SHA512" class="option">SHA512</option>
+        </select>
+    </div>
+    <div>
+        <p class="embed">嵌入水印</p>
+        <button class="encrypt" id="embed">嵌入</button>
+    </div>
+    <div>
+        <p class="extract">验证信息</p>
+        <button class="decrypt" id="extract">验证</button>
+    </div>
+    <div>
+        <p class="extract">文件下载</p>
+        <button class="decrypt" id="download">下载</button>
+    </div>
+</div>
+<div class="result">
+    <label class="describe"></label>
+    <div class="bool" id="bool"></div>
+</div>
+</div>
+<div class="box-right">
+    <div id="right-area">
+        <textarea placeholder="结果" class="output" id="output" disabled></textarea>
+    </div>
+    <div class="quality">
+        <div class="index1">
+            <p>嵌入位数(bit)</p>
+            <textarea class="digit"  disabled id="bits"></textarea>
+        </div>
+        <div class="index2">
+            <p>哈希速度(ms)</p>
+            <textarea class="digit"  disabled id="hash_time"></textarea>
+        </div>
+        <div class="index3" >
+            <p>嵌入速度(ms)</p>
+            <textarea class="digit"  disabled id="encode_time"></textarea>
+        </div>
+        <div class="index4">
+            <p>提取速度(ms)</p>
+            <textarea class="digit"  disabled id="decode_time"></textarea>
+        </div>
+    </div>
+</div>
+</div>
+<script src="/static/js/axios/dist/axios.min.js"></script>
+<script>
+    {
+        function embed(){
+            let text = document.getElementById("input").value;
+            if(text == ""){
+                alert("input text is null");
+                return false;
+            }
+            let select = document.getElementById("algorithm");
+
+            let index = select.selectedIndex;
+            var hash = select.options[index].value;
+            const file = document.querySelector(".file").files[0];
+            const  form = new FormData();
+            form.append("msg", text);
+            form.append("Hash", hash);
+            if(!!file){
+                form.append("filename",file.name);
+                console.log(file.name);
+            }
+            console.log(hash);
+                axios({
+                    url: 'http://localhost:12345/embed',
+                    method: 'POST',
+                    data:form
+                }).then(result => {
+                    const data = result.data;
+                    console.log(data);
+                    document.getElementById("output").innerHTML = data.new_msg;
+                    document.getElementById("bool").style.backgroundImage = "url(/static/image/true.png)";
+                    document.querySelector('.describe').innerHTML = "嵌入结果";
+                    document.getElementById("bits").innerHTML = data.bits;
+                    document.getElementById("hash_time").innerHTML = data.hash_time;
+                    document.getElementById("encode_time").innerHTML = data.encode_time;
+                    document.getElementById("decode_time").innerHTML = "";
+                }).catch((error) => {
+                    console.log(error);
+                })
+            }
+        const element1 = document.getElementById("embed");
+        element1.addEventListener("click", embed);
+    }
+
+    {
+        function postFile(){
+            const file = document.querySelector(".file").files[0]; 
+            var name = file.name.split(".").pop();
+
+            if(!(/\.(?:txt|py|java|c|cpp|go|js|php|zip|tar|7z|rar)$/.test(file.name))){
+                alert("file type is wrong");
+                return false;
+            }
+            const form = new FormData;
+            form.append("file", file);
+        axios({
+            url:"http://localhost:12345/postFile",
+            method: "POST",
+            headers:{
+                "Content-Type": "multipart/form-data"
+            },
+            data:form
+        }).then(result =>{
+            const data = result.data;
+            console.log(result.data);
+            document.getElementById("input").value = data.content;
+            document.getElementById("bool").style.backgroundImage = "url(/static/image/true.png)";
+            document.querySelector('.describe').innerHTML = "文件上传结果";
+            document.getElementById("bits").innerHTML = "";
+            document.getElementById("hash_time").innerHTML = "";
+            document.getElementById("decode_time").innerHTML = "";
+            document.getElementById("encode_time").innerHTML = "";
+            document.getElementById("output").innerHTML = "";
+        }).catch(error => {
+            console.log(error)
+        })
+    }
+        const element2 = document.getElementById("postFile");
+        element2.addEventListener("click", postFile);
+    }
+
+    {
+        function extract(){
+            let text = document.getElementById("input").value;
+            if(text == ""){
+                alert("input text is null");
+                return false;
+            }
+            let select = document.getElementById("algorithm");
+
+            let index = select.selectedIndex;
+            var hash = select.options[index].value;
+            const file = document.querySelector(".file").files[0];
+            const  form = new FormData();
+            form.append("msg", text);
+            form.append("Hash", hash);
+            if(!!file){
+                form.append("filename",file.name);
+                console.log(file.name);
+            }
+            axios({
+                url: "http://localhost:12345/extract",
+                method: "POST",
+                data:form
+            }).then(result => {
+                console.log(result.data);
+                const judge = result.data.result;
+                const data = result.data;
+                if(judge == 0){
+                    document.querySelector('.describe').innerHTML = "验证结果";
+                    document.getElementById("bool").style.backgroundImage = "url(/static/image/false.png)";
+                    document.getElementById("output").innerHTML = data.new_msg;
+                    document.getElementById("bits").innerHTML = data.bits;
+                    document.getElementById("hash_time").innerHTML = data.hash_time;
+                    document.getElementById("decode_time").innerHTML = data.decode_time;
+                    document.getElementById("encode_time").innerHTML = "";
+                } else{
+                    document.getElementById("bool").style.backgroundImage = "url(/static/image/true.png)";
+                    document.querySelector('.describe').innerHTML = "验证结果";
+                    document.getElementById("output").innerHTML = data.new_msg;
+                    document.getElementById("bits").innerHTML = data.bits;
+                    document.getElementById("hash_time").innerHTML = data.hash_time;
+                    document.getElementById("decode_time").innerHTML = data.decode_time;
+                    document.getElementById("encode_time").innerHTML = "";
+                }
+            }).catch(error => {
+            alert("check")
+        })
+        }
+        const element3 = document.getElementById("extract");
+        element3.addEventListener("click", extract);
+    }
+
+    {
+        function download(){
+            
+            const file = document.querySelector(".file").files[0]; 
+            var filename = file.name;
+            var form = new FormData();
+            form.append("filename", filename);
+            axios({
+                url:"http://localhost:12345/download",
+                method: "POST",
+                data: form,
+                responseType: "blob"
+            }).then(result => {
+                console.log(result.data);
+                console.log(filename);
+                let blob = new Blob([result.data]);
+                let a = document.createElement('a');
+                a.href = window.URL.createObjectURL(blob)
+                a.download = filename;
+                a.click();
+                window.URL.revokeObjectURL(url);
+            }).catch(error => {
+                console.log(error)
+            })
+
+        }
+        const element4 = document.getElementById("download");
+        element4.addEventListener("click", download);
+    }
+
+    
+
+</script>
+</body>
+</html>
